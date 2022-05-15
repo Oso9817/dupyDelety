@@ -1,8 +1,9 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
+	//"bufio"
+	//"bytes"
+
 	//"reflect"
 	"strings"
 
@@ -20,8 +21,8 @@ import (
 	"path/filepath"
 )
 
-func hasDupes(m map[string]string) []string {
-	x := make(map[string]struct{})
+func hasDupes(m map[string]*goimagehash.ImageHash) []string {
+	x := make(map[*goimagehash.ImageHash]struct{})
 	//finds duplicates
 	var dupeFiles []string
 	for i, v := range m {
@@ -34,6 +35,7 @@ func hasDupes(m map[string]string) []string {
 	return dupeFiles
 
 }
+
 func main() {
 	//_, bar := diffList(iterate("C:/Users/Alonzo/Programming/DisArchived/DisArchived/images"))
 	//	for _, i := range bar {
@@ -46,7 +48,7 @@ func main() {
 
 	imageDir := "C:/Users/Alonzo/Programming/DisArchived/DisArchived/images/"
 	images := iterate(imageDir)
-	var hashes = make(map[string]string)
+	var hashes = make(map[string]*goimagehash.ImageHash)
 	for _, foo := range images {
 		fileDir := imageDir + foo
 
@@ -65,7 +67,9 @@ func main() {
 
 			}
 			hash, _ := goimagehash.DifferenceHash(img1)
-			hashes[foo] = hash.ToString()
+			hashes[foo] = hash
+			distance, _ := hash.Distance(hashes["ship1D.jpg"])
+			fmt.Printf("DIF HASH Distance between images: %v\n", distance)
 			if err != nil {
 				log.Println(img1, err)
 
@@ -81,7 +85,7 @@ func main() {
 			//maps name, hash as k,v to map, next is to find duplicates and move them to a separate folder, and fix png not working
 
 			hash, _ := goimagehash.DifferenceHash(img1)
-			hashes[foo] = hash.ToString()
+			hashes[foo] = hash
 			if err != nil {
 				log.Println(img1, err)
 
@@ -96,51 +100,6 @@ func main() {
 	}
 	log.Print(len(hashes))
 	hasDupes(hashes)
-	imagePng := "ship1C.png"
-	imageJpg := "ship1.jpg"
-
-	fileExt := findExt(imagePng)
-	log.Println(fileExt)
-
-	file1, err := os.Open(imagePng)
-	if err != nil {
-		log.Println(err)
-	}
-	defer file1.Close()
-	//convert image to string to base64 then hash it? lol
-	img1, err := png.Decode(file1)
-	if err != nil {
-		log.Println(img1, err)
-
-	}
-
-	file2, _ := os.Open(imageJpg)
-	defer file1.Close()
-	defer file2.Close()
-
-	img2, _ := jpeg.Decode(file2)
-
-	hash1, _ := goimagehash.AverageHash(img1)
-	hash2, _ := goimagehash.AverageHash(img2)
-	distance, _ := hash1.Distance(hash2)
-	fmt.Printf("AVG HASH Distance between images: %v\n", distance)
-
-	hash1, _ = goimagehash.DifferenceHash(img1)
-	hash2, _ = goimagehash.DifferenceHash(img2)
-	distance, _ = hash1.Distance(hash2)
-	fmt.Printf("DIF HASH Distance between images: %v\n", distance)
-	width, height := 8, 8
-	hash3, _ := goimagehash.ExtAverageHash(img1, width, height)
-	hash4, _ := goimagehash.ExtAverageHash(img2, width, height)
-	distance, _ = hash3.Distance(hash4)
-	fmt.Printf("EXTAVG HASH Distance between images: %v\n", distance)
-	fmt.Printf("hash3 bit size: %v\n", hash3.Bits())
-	fmt.Printf("hash4 bit size: %v\n", hash4.Bits())
-
-	var b bytes.Buffer
-	foo := bufio.NewWriter(&b)
-	_ = hash4.Dump(foo)
-	foo.Flush()
 
 }
 
