@@ -22,7 +22,7 @@ var (
 	errInvalid = errors.New("invalid input data")
 )
 
-func hasDupes(m map[string]*goimagehash.ImageHash, imageDir string) {
+func HasDupes(m map[string]*goimagehash.ImageHash, imageDir string) int {
 	//checkes provided map and comppares hash distance to determine similarity, removes those files
 	var lastKey string
 	removedQTY := 0
@@ -53,10 +53,11 @@ func hasDupes(m map[string]*goimagehash.ImageHash, imageDir string) {
 		lastHash = currentHash
 	}
 	log.Printf("Removed %v duplicate files!", removedQTY)
+	return removedQTY
 
 }
 
-func processImage(file string, fileName string, hashes map[string]*goimagehash.ImageHash) (*goimagehash.ImageHash, error) {
+func ProcessImage(file string) (*goimagehash.ImageHash, error) {
 	file1, err := os.Open(file)
 	//if it cant open the file, move to the next, opening file is the most crucial step
 	if err != nil {
@@ -83,7 +84,7 @@ func processImage(file string, fileName string, hashes map[string]*goimagehash.I
 }
 
 //creates hash map paired with file names to check later for comparision
-func hashMap(imageDir string, images []string) (map[string]*goimagehash.ImageHash, error) {
+func HashMap(imageDir string, images []string) (map[string]*goimagehash.ImageHash, error) {
 	var hashes = make(map[string]*goimagehash.ImageHash)
 	if imageDir == "" || images == nil {
 		return nil, errInvalid
@@ -92,7 +93,7 @@ func hashMap(imageDir string, images []string) (map[string]*goimagehash.ImageHas
 	for _, foo := range images {
 		file := filepath.Join(imageDir, foo)
 
-		imageHash, err := processImage(file, foo, hashes)
+		imageHash, err := ProcessImage(file)
 		if errors.Is(err, io.EOF) || errors.Is(err, image.ErrFormat) {
 			continue
 		} else if err != nil {
@@ -105,58 +106,7 @@ func hashMap(imageDir string, images []string) (map[string]*goimagehash.ImageHas
 	return hashes, nil
 }
 
-func main() {
-
-	imageDir := "C:/Users/Alonzo/Programming/DisArchived/DisArchived/fullSet/"
-
-	images, err := iterate(imageDir)
-	if err != nil {
-		log.Println(err)
-	}
-	hashes, err := hashMap(imageDir, images)
-	if err != nil {
-		log.Println(err)
-	}
-	hasDupes(hashes, imageDir)
-	//delFiles(imageDir, dupeFiles)
-
-}
-
-//is to be used to move failed files to a different folder directory
-func diffList(fileNames []string) (map[string]*goimagehash.ImageHash, []string) {
-	// slice will be in [filename, diffList]
-	var brokePic []string
-	var hashes = make(map[string]*goimagehash.ImageHash)
-
-	//convert failed to base64??
-	for _, v := range fileNames {
-		ogPath := "C:/Users/Alonzo/Programming/DisArchived/DisArchived/images/" + v
-		file1, err := os.Open(ogPath)
-		if err != nil {
-			log.Println(err)
-		}
-		defer file1.Close()
-		img1, _, err := image.Decode(file1)
-		if err != nil {
-			log.Println(err)
-			brokePic = append(brokePic, ogPath)
-			if err != nil {
-				log.Println(err)
-			}
-
-		}
-		hash1, err := goimagehash.DifferenceHash(img1)
-		if err != nil {
-			log.Println(err)
-
-		}
-		hashes[v] = hash1
-	}
-
-	return hashes, brokePic
-}
-
-func iterate(dir string) ([]string, error) {
+func Iterate(dir string) ([]string, error) {
 	//returns directory in []string to be used to loop hashes
 	var titles []string
 	files, err := ioutil.ReadDir(dir)
@@ -165,9 +115,7 @@ func iterate(dir string) ([]string, error) {
 	}
 
 	for _, file := range files {
-
 		titles = append(titles, file.Name())
-
 	}
 
 	return titles, nil
